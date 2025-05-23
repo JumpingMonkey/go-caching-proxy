@@ -79,10 +79,13 @@ To clear the cache:
 
 The cache key is generated based on:
 - Request method
-- URL
+- Path and query parameters (not the full URL with domain)
 - Important headers like `Accept` and `Accept-Encoding`
 
-This ensures that different variations of the same request (e.g., requesting JSON vs. XML) are cached separately.
+This approach ensures:
+- Different variations of the same request (e.g., requesting JSON vs. XML) are cached separately
+- Consistent caching behavior regardless of which domain or hostname is used to access the proxy
+- Better cache hit ratios by using domain-independent keys
 
 ## Documentation
 
@@ -94,6 +97,38 @@ Comprehensive documentation is available in the `docs/` directory:
 - Examples and troubleshooting
 
 To view the documentation, browse the files in the `docs/` directory, starting with `docs/README.md`.
+
+## Testing
+
+The project includes comprehensive test suites for both the cache and proxy components. These tests verify the correct functionality of the caching mechanism, response headers, and proxy behavior.
+
+### Running Tests with Docker
+
+The easiest way to run tests is using Docker:
+
+```bash
+# Build the test Docker image
+docker build -t caching-proxy-test -f Dockerfile.test .
+
+# Run the tests
+docker run --rm caching-proxy-test
+```
+
+### Test Coverage
+
+The test suite covers the following functionality:
+
+#### Cache Tests
+- Cache initialization and configuration
+- Setting and retrieving cached responses
+- Cache expiration behavior
+- Cache clearing functionality
+
+#### Proxy Tests
+- Cache key generation (ensuring domain-independence)
+- Proxy response writer headers (HIT/MISS/BYPASS)
+- Cached response handling
+- Proper header management
 
 ## Development
 
