@@ -2,6 +2,8 @@
 
 A command-line tool that starts a caching proxy server, which forwards requests to an origin server and caches the responses. Subsequent identical requests will return the cached response instead of forwarding to the server.
 
+This project is based on the [Caching Server](https://roadmap.sh/projects/caching-server) project idea.
+
 ## Features
 
 - Forward HTTP requests to a specified origin server
