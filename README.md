@@ -84,19 +84,16 @@ The cache key is generated based on:
 
 This ensures that different variations of the same request (e.g., requesting JSON vs. XML) are cached separately.
 
-## API Documentation
+## Documentation
 
-API documentation is available via Swagger UI:
+Comprehensive documentation is available in the `docs/` directory:
 
-1. Generate the Swagger JSON file by running the PHP script:
-   ```bash
-   php docs/generate-swagger-json.php
-   ```
+- Installation and usage guides
+- API reference
+- Architecture overview
+- Examples and troubleshooting
 
-2. Open the Swagger UI in your browser:
-   ```bash
-   open docs/swagger-ui.html
-   ```
+To view the documentation, browse the files in the `docs/` directory, starting with `docs/README.md`.
 
 ## Development
 

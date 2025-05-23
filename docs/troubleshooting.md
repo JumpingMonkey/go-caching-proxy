@@ -57,10 +57,11 @@ Failed to parse origin URL: parse "http//example.com": invalid URL
 
 ## Caching Issues
 
-### Responses Not Being Cached
+### Responses Not Being Cached or Cache Headers Not Showing
 
 **Symptoms:**
 - Every request shows `X-Cache: MISS`
+- Cache headers not appearing in responses
 
 **Possible Causes and Solutions:**
 
@@ -75,6 +76,28 @@ Failed to parse origin URL: parse "http//example.com": invalid URL
 3. **Cache expiration**
    
    **Solution:** The default cache expiration is 5 minutes. After this time, items are evicted from the cache.
+
+4. **Origin server headers overriding proxy headers**
+   
+   **Solution:** Some origin servers might set their own caching headers that override the proxy's headers. Modify the proxy implementation to ensure your custom headers have precedence:
+   ```go
+   // Ensure headers are set after copying from the origin
+   for k, values := range cachedResp.Headers {
+       // Skip headers we want to control
+       if k == "X-Cache" {
+           continue
+       }
+       for _, v := range values {
+           w.Header().Add(k, v)
+       }
+   }
+   // Set cache status header last to ensure it's not overridden
+   w.Header().Set("X-Cache", "HIT")
+   ```
+
+5. **Header order issues**
+   
+   **Solution:** Make sure headers are set before calling `w.WriteHeader()` as headers cannot be modified after the status code is written.
 
 ### Cache Not Clearing
 
@@ -128,6 +151,53 @@ Failed to parse origin URL: parse "http//example.com": invalid URL
    **Solution:** Each unique request (based on method, URL, and some headers) gets a separate cache entry.
 
 ## Docker Issues
+
+### Build Errors
+
+**Symptoms:**
+- Error when building the Docker image
+- Errors related to missing go.sum entries
+
+**Possible Causes and Solutions:**
+
+1. **Missing go.sum entries for dependencies**
+   ```
+   ERROR [caching-proxy builder 6/6] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o caching-proxy ./cmd/caching-proxy
+   
+   cmd/caching-proxy/main.go:7:2: missing go.sum entry for module providing package github.com/spf13/cobra
+   internal/cache/cache.go:7:2: missing go.sum entry for module providing package github.com/patrickmn/go-cache
+   ```
+   
+   **Solution:** Initialize and update the go.sum file before building:
+   ```bash
+   # In the project root directory
+   go mod tidy
+   ```
+   This command will download the required dependencies and update the go.sum file with the correct entries.
+
+2. **Checksum mismatch in go.sum file**
+   ```
+   verifying github.com/spf13/cobra@v1.7.0/go.mod: checksum mismatch
+   downloaded: h1:uLxZILRyS/50WlhOIKD7W6V5bgeIt+4sICxh6uRMrb0=
+   go.sum:     h1:uLxZILRyS+CydJXdJ3PSdnLsPWNfu5J6EQET7GU63M4=
+   
+   SECURITY ERROR
+   This download does NOT match an earlier download recorded in go.sum.
+   ```
+   
+   **Solution:** When go.sum checksums don't match, you need to recreate the go.sum file with verified checksums:
+   ```bash
+   # Remove the existing go.sum file
+   rm go.sum
+   
+   # Recreate it with verified checksums
+   go mod tidy
+   ```
+   If you don't have Go installed locally, you'll need to use a Go container to generate the proper go.sum file:
+   ```bash
+   # Use a temporary Go container to generate the go.sum file
+   docker run --rm -v $(pwd):/app -w /app golang:1.21 go mod tidy
+   ```
 
 ### Container Exits Immediately
 
